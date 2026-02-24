@@ -99,7 +99,7 @@ export default function Tools() {
       formData.append("summaryType", summaryType);
       formData.append("summaryLength", summaryLength);
 
-      const res = await axios.post("http://localhost:5000/api/summarize", formData, {
+      const res = await axios.post("http://nyxai.pxxl.click/api/summarize", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

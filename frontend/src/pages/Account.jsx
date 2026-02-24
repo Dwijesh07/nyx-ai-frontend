@@ -33,7 +33,7 @@ export default function Account() {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/waitlist", {
+      const response = await fetch("http://nyxai.pxxl.click/api/waitlist", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

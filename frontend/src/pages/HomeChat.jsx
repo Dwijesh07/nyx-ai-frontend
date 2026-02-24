@@ -35,7 +35,7 @@ export default function HomeChat() {
 
   const fetchConversations = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/chat");
+      const res = await axios.get("http://nyxai.pxxl.click/api/chat");
       setConversations(res.data.conversations);
     } catch (error) {
       console.error("Failed to load conversations:", error);
@@ -44,7 +44,7 @@ export default function HomeChat() {
 
   const startNewChat = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/api/chat/new");
+      const res = await axios.post("http://nyxai.pxxl.click/api/chat/new");
       setCurrentConversationId(res.data.conversationId);
       setMessages(res.data.conversation.messages);
       fetchConversations();
@@ -84,7 +84,7 @@ export default function HomeChat() {
       if (url) formData.append("url", url);
       if (file) formData.append("file", file);
 
-      const res = await axios.post("http://localhost:5000/api/chat/message", formData, {
+      const res = await axios.post("http://nyxai.pxxl.click/api/chat/message", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -117,7 +117,7 @@ export default function HomeChat() {
 
   const loadConversation = async (conversationId) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/chat/${conversationId}`);
+      const res = await axios.get(`http://nyxai.pxxl.click/api/chat/${conversationId}`);
       setCurrentConversationId(conversationId);
       setMessages(res.data.conversation.messages);
     } catch (error) {
@@ -127,7 +127,7 @@ export default function HomeChat() {
 
   const deleteConversation = async (conversationId) => {
     try {
-      await axios.delete(`http://localhost:5000/api/chat/${conversationId}`);
+      await axios.delete(`http://nyxai.pxxl.click/api/chat/${conversationId}`);
       fetchConversations();
       if (currentConversationId === conversationId) {
         startNewChat();
