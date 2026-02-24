@@ -1,0 +1,192 @@
+/* src/theme.css - Global Dark Blue & Gold Theme */
+
+:root {
+  --color-navy-50: #f0f4f8;
+  --color-navy-100: #d9e2ec;
+  --color-navy-200: #bcccdc;
+  --color-navy-300: #9fb3c8;
+  --color-navy-400: #829ab1;
+  --color-navy-500: #486581;
+  --color-navy-600: #334e68;
+  --color-navy-700: #243b53;
+  --color-navy-800: #1c2d3f;
+  --color-navy-900: #102a43;
+  --color-navy-950: #0c1d2d;
+  
+  --color-gold-50: #fffdf2;
+  --color-gold-100: #fff9d9;
+  --color-gold-200: #fff3b2;
+  --color-gold-300: #ffea80;
+  --color-gold-400: #ffd94d;
+  --color-gold-500: #ffc107;
+  --color-gold-600: #e6a900;
+  --color-gold-700: #cc9200;
+  --color-gold-800: #b37c00;
+  --color-gold-900: #996600;
+}
+
+/* === GLOBAL STYLES === */
+body {
+  background: linear-gradient(135deg, var(--color-navy-950) 0%, var(--color-navy-900) 50%, var(--color-navy-800) 100%);
+  color: var(--color-navy-100);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+
+/* === TYPOGRAPHY === */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-gold-100);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* === BUTTONS === */
+.btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: none;
+  font-weight: 600;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s;
+}
+
+.btn:hover::after {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-gold-600) 0%, var(--color-gold-500) 100%);
+  color: var(--color-navy-950);
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid var(--color-navy-500);
+  color: var(--color-navy-200);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-gold-500);
+  color: var(--color-gold-300);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+}
+
+/* === CARDS === */
+.card {
+  background: linear-gradient(135deg, var(--color-navy-800) 0%, var(--color-navy-700) 100%);
+  border: 1px solid var(--color-navy-600);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-500), transparent);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  border-color: var(--color-gold-500);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 193, 7, 0.1);
+}
+
+/* === INPUTS === */
+.input {
+  background: var(--color-navy-900);
+  border: 2px solid var(--color-navy-700);
+  color: var(--color-navy-100);
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  border-color: var(--color-gold-500);
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+  background: var(--color-navy-800);
+}
+
+.input::placeholder {
+  color: var(--color-navy-500);
+}
+
+/* === BADGES === */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.badge-premium {
+  background: linear-gradient(135deg, var(--color-gold-500) 0%, var(--color-gold-700) 100%);
+  color: var(--color-navy-950);
+}
+
+.badge-free {
+  background: linear-gradient(135deg, var(--color-navy-500) 0%, var(--color-navy-600) 100%);
+  color: var(--color-navy-100);
+}
+
+/* === ANIMATIONS === */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, 
+    var(--color-navy-800) 0%, 
+    var(--color-navy-700) 50%, 
+    var(--color-navy-800) 100%);
+  background-size: 200% auto;
+  animation: shimmer 3s infinite linear;
+}
+
+/* === GRADIENTS === */
+.gradient-navy-gold {
+  background: linear-gradient(135deg, var(--color-navy-900) 0%, var(--color-navy-700) 50%, var(--color-gold-900) 100%);
+}
+
+.gradient-gold-navy {
+  background: linear-gradient(135deg, var(--color-gold-700) 0%, var(--color-gold-500) 50%, var(--color-navy-700) 100%);
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-gold-600), var(--color-gold-400));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(var(--color-gold-500), var(--color-gold-300));
+}

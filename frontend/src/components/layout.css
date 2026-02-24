@@ -1,0 +1,32 @@
+/* layout.css */
+
+/* Active link styling */
+.nav-link {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-link.active {
+  color: #2563eb; /* blue-600 */
+  font-weight: 600;
+}
+
+/* Smooth hover color transition */
+.nav-link:hover {
+  color: #2563eb; /* blue-600 */
+  transition: color 0.2s ease;
+}
+
+/* Navbar transition */
+.navbar-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Logo hover effect */
+.logo-hover {
+  transition: transform 0.2s ease;
+}
+
+.logo-hover:hover {
+  transform: scale(1.05);
+}
