@@ -44,6 +44,11 @@ console.log("=====================\n");
 
 const app = express();
 
+// ========== HEALTH CHECK ENDPOINT (FIRST!) ==========
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Configure email transporter with better options
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -70,10 +75,9 @@ transporter.verify((error, success) => {
   }
 });
 
-// ==================== FIXED CORS CONFIGURATION ====================
-// More permissive CORS configuration
+// ==================== CORS CONFIGURATION ====================
 app.use(cors({
-  origin: '*', // Allow all origins temporarily for testing
+  origin: '*',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
@@ -96,10 +100,39 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
   next();
 });
-// ==================== END CORS FIX ====================
+// ==================== END CORS ====================
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.url}`);
+  next();
+});
+
+// ========== DATA DIRECTORY WITH FALLBACK ==========
+let dataDir;
+try {
+  dataDir = path.join(__dirname, 'data');
+  await fs.mkdir(dataDir, { recursive: true });
+  // Test write permissions
+  const testFile = path.join(dataDir, 'test.txt');
+  await fs.writeFile(testFile, 'test');
+  await fs.unlink(testFile);
+  console.log("✅ Data directory is writable at:", dataDir);
+} catch (err) {
+  console.log("⚠️ Cannot write to ./data, trying /tmp instead:", err.message);
+  // Try using /tmp directory (common in hosting environments)
+  dataDir = '/tmp/nyx-data';
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+    console.log("✅ Using /tmp directory at:", dataDir);
+  } catch (tmpErr) {
+    console.error("❌ Cannot write to any directory:", tmpErr.message);
+    dataDir = null;
+  }
+}
 
 // Add this temporary test endpoint
 app.get("/api/chat-test", (req, res) => {
@@ -107,12 +140,6 @@ app.get("/api/chat-test", (req, res) => {
     message: "Chat routes are working", 
     routes: ["/api/chat/new", "/api/chat", "/api/chat/:id", "/api/chat/message"] 
   });
-});
-
-// Log all requests for debugging
-app.use((req, res, next) => {
-  console.log(`📡 ${req.method} ${req.url}`);
-  next();
 });
 
 // ========== TEST EMAIL ENDPOINT ==========
@@ -173,10 +200,9 @@ app.post("/api/waitlist", async (req, res) => {
     const userName = name || 'Future Nyx User';
     console.log("User name set to:", userName);
     
-    // Ensure data directory exists
-    const dataDir = path.join(__dirname, 'data');
-    await fs.mkdir(dataDir, { recursive: true });
-    console.log("✅ Data directory ready");
+    if (!dataDir) {
+      throw new Error("No writable data directory available");
+    }
     
     // Read existing waitlist
     const waitlistPath = path.join(dataDir, 'waitlist.json');
@@ -219,7 +245,7 @@ app.post("/api/waitlist", async (req, res) => {
       // 1. Send welcome email to user
       try {
         console.log("Preparing welcome email...");
-        const welcomeResult = await transporter.sendMail({
+        await transporter.sendMail({
           from: `Nyx AI <${process.env.MY_EMAIL}>`,
           to: email,
           subject: '🎉 Welcome to Nyx AI Waitlist!',
@@ -301,7 +327,10 @@ app.post("/api/waitlist", async (req, res) => {
 // ========== VIEW WAITLIST (Admin) ==========
 app.get("/api/waitlist", async (req, res) => {
   try {
-    const waitlistPath = path.join(__dirname, 'data', 'waitlist.json');
+    if (!dataDir) {
+      return res.send('<h1>No data directory available</h1>');
+    }
+    const waitlistPath = path.join(dataDir, 'waitlist.json');
     let users = [];
     
     try {
@@ -363,9 +392,9 @@ app.post("/api/contact", async (req, res) => {
       return res.status(400).json({ error: 'Name, email and message are required' });
     }
 
-    // Ensure data directory exists
-    const dataDir = path.join(__dirname, 'data');
-    await fs.mkdir(dataDir, { recursive: true });
+    if (!dataDir) {
+      throw new Error("No writable data directory available");
+    }
     
     // Save to JSON file
     const contactPath = path.join(dataDir, 'contact.json');
@@ -438,7 +467,10 @@ app.post("/api/contact", async (req, res) => {
 // ========== VIEW CONTACT SUBMISSIONS (Admin) ==========
 app.get("/api/contact", async (req, res) => {
   try {
-    const contactPath = path.join(__dirname, 'data', 'contact.json');
+    if (!dataDir) {
+      return res.send('<h1>No data directory available</h1>');
+    }
+    const contactPath = path.join(dataDir, 'contact.json');
     let contacts = [];
     
     try {
@@ -507,13 +539,35 @@ app.get("/", (req, res) => {
 app.use("/api/summarize", summarizeRoute);
 app.use("/api/chat", chatRoute);
 
+// ========== ERROR HANDLING ==========
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('❌ Unhandled Rejection:', err);
+});
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
   console.log(`📧 Test email: http://localhost:${PORT}/api/test-email`);
   console.log(`📧 Waitlist POST: http://localhost:${PORT}/api/waitlist`);
   console.log(`📊 Waitlist Admin: http://localhost:${PORT}/api/waitlist`);
   console.log(`📬 Contact POST: http://localhost:${PORT}/api/contact`);
   console.log(`📋 Contact Admin: http://localhost:${PORT}/api/contact`);
+  console.log(`🩺 Health check: http://localhost:${PORT}/health`);
 });
