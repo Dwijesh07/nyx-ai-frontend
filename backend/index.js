@@ -186,6 +186,12 @@ app.get("/api/test-email", async (req, res) => {
 app.post("/api/waitlist", async (req, res) => {
   console.log("\n📝 NEW WAITLIST SUBMISSION");
   console.log("Request body:", req.body);
+  console.log("📧 Email credentials check:", {
+    hasEmail: !!process.env.MY_EMAIL,
+    hasPass: !!process.env.MY_PASS,
+    email: process.env.MY_EMAIL,
+    passLength: process.env.MY_PASS?.length
+  });
   
   try {
     const { email, name } = req.body;
@@ -239,13 +245,14 @@ app.post("/api/waitlist", async (req, res) => {
     await fs.appendFile(csvPath, csvLine).catch(() => {});
     console.log("✅ User saved to waitlist.csv");
 
+    // Check if email credentials exist
     if (process.env.MY_EMAIL && process.env.MY_PASS) {
       console.log("📧 Attempting to send welcome email to:", email);
       
       // 1. Send welcome email to user
       try {
         console.log("Preparing welcome email...");
-        await transporter.sendMail({
+        const welcomeInfo = await transporter.sendMail({
           from: `Nyx AI <${process.env.MY_EMAIL}>`,
           to: email,
           subject: '🎉 Welcome to Nyx AI Waitlist!',
@@ -281,16 +288,21 @@ app.post("/api/waitlist", async (req, res) => {
             </div>
           `
         });
-        console.log("✅ Welcome email sent successfully!");
+        console.log("✅ Welcome email sent successfully! Message ID:", welcomeInfo.messageId);
       } catch (emailError) {
         console.log('❌ Welcome email failed:', emailError.message);
+        console.log('Error details:', {
+          name: emailError.name,
+          code: emailError.code,
+          response: emailError.response
+        });
       }
 
       // 2. Send notification to yourself
       try {
         console.log("📧 Attempting to send notification to admin:", process.env.MY_EMAIL);
         
-        await transporter.sendMail({
+        const notifyInfo = await transporter.sendMail({
           from: `Nyx AI <${process.env.MY_EMAIL}>`,
           to: process.env.MY_EMAIL,
           subject: '🎉 NEW WAITLIST SIGNUP!',
@@ -306,10 +318,17 @@ app.post("/api/waitlist", async (req, res) => {
             </div>
           `
         });
-        console.log("✅ Notification email sent successfully!");
+        console.log("✅ Notification email sent successfully! Message ID:", notifyInfo.messageId);
       } catch (notifyError) {
         console.log('❌ Notification email failed:', notifyError.message);
+        console.log('Error details:', {
+          name: notifyError.name,
+          code: notifyError.code,
+          response: notifyError.response
+        });
       }
+    } else {
+      console.log('⚠️ Email credentials not set - skipping emails');
     }
 
     console.log("✅ Sending success response to client");
@@ -427,7 +446,7 @@ app.post("/api/contact", async (req, res) => {
     // Send email notification to yourself
     if (process.env.MY_EMAIL && process.env.MY_PASS) {
       try {
-        await transporter.sendMail({
+        const contactInfo = await transporter.sendMail({
           from: `"Nyx AI Contact" <${process.env.MY_EMAIL}>`,
           to: process.env.MY_EMAIL,
           subject: `📬 New Contact Form: ${subject || 'General Inquiry'}`,
@@ -447,7 +466,7 @@ app.post("/api/contact", async (req, res) => {
             </div>
           `
         });
-        console.log("✅ Contact form email sent to admin");
+        console.log("✅ Contact form email sent to admin. Message ID:", contactInfo.messageId);
       } catch (emailError) {
         console.log('❌ Contact email failed:', emailError.message);
       }
