@@ -71,9 +71,23 @@ transporter.verify((error, success) => {
 });
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: ['https://nyxai-three.vercel.app', 'http://localhost:5000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add this temporary test endpoint
+app.get("/api/chat-test", (req, res) => {
+  res.json({ 
+    message: "Chat routes are working", 
+    routes: ["/api/chat/new", "/api/chat", "/api/chat/:id", "/api/chat/message"] 
+  });
+});
 
 // Log all requests for debugging
 app.use((req, res, next) => {
