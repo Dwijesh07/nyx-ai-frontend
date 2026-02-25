@@ -13,6 +13,9 @@ export default function Contact() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [submitted, setSubmitted] = useState(false);
+  
+  // ADD THIS LINE:
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleChange = (e) => {
     setFormData({
@@ -40,7 +43,8 @@ export default function Contact() {
     }
 
     try {
-      const response = await fetch("http://nyxai.pxxl.click/api/contact", {
+      // CHANGE THIS LINE - use API_URL variable:
+      const response = await fetch(`${API_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -78,6 +82,7 @@ export default function Contact() {
     }
   };
 
+  // ... rest of your component remains exactly the same ...
   return (
     <>
       {/* Hero Section */}

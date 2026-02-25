@@ -11,7 +11,10 @@ export default function HomeChat() {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const chatInterfaceRef = useRef(null); // Add this ref for scrolling
+  const chatInterfaceRef = useRef(null);
+  
+  // ADD THIS LINE:
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,7 +38,8 @@ export default function HomeChat() {
 
   const fetchConversations = async () => {
     try {
-      const res = await axios.get("http://nyxai.pxxl.click/api/chat");
+      // UPDATED: Use API_URL variable
+      const res = await axios.get(`${API_URL}/api/chat`);
       setConversations(res.data.conversations);
     } catch (error) {
       console.error("Failed to load conversations:", error);
@@ -44,7 +48,8 @@ export default function HomeChat() {
 
   const startNewChat = async () => {
     try {
-      const res = await axios.post("http://nyxai.pxxl.click/api/chat/new");
+      // UPDATED: Use API_URL variable
+      const res = await axios.post(`${API_URL}/api/chat/new`);
       setCurrentConversationId(res.data.conversationId);
       setMessages(res.data.conversation.messages);
       fetchConversations();
@@ -84,7 +89,8 @@ export default function HomeChat() {
       if (url) formData.append("url", url);
       if (file) formData.append("file", file);
 
-      const res = await axios.post("http://nyxai.pxxl.click/api/chat/message", formData, {
+      // UPDATED: Use API_URL variable
+      const res = await axios.post(`${API_URL}/api/chat/message`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -106,7 +112,7 @@ export default function HomeChat() {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // Prevent default to avoid new line
+      e.preventDefault();
       handleSend(e);
     }
   };
@@ -117,7 +123,8 @@ export default function HomeChat() {
 
   const loadConversation = async (conversationId) => {
     try {
-      const res = await axios.get(`http://nyxai.pxxl.click/api/chat/${conversationId}`);
+      // UPDATED: Use API_URL variable
+      const res = await axios.get(`${API_URL}/api/chat/${conversationId}`);
       setCurrentConversationId(conversationId);
       setMessages(res.data.conversation.messages);
     } catch (error) {
@@ -127,7 +134,8 @@ export default function HomeChat() {
 
   const deleteConversation = async (conversationId) => {
     try {
-      await axios.delete(`http://nyxai.pxxl.click/api/chat/${conversationId}`);
+      // UPDATED: Use API_URL variable
+      await axios.delete(`${API_URL}/api/chat/${conversationId}`);
       fetchConversations();
       if (currentConversationId === conversationId) {
         startNewChat();
@@ -137,6 +145,7 @@ export default function HomeChat() {
     }
   };
 
+  // The rest of your component remains exactly the same...
   return (
     <>
       {/* Hero Section */}
@@ -194,7 +203,7 @@ export default function HomeChat() {
           </div>
         </div>
 
-        {/* Chat Interface - Added ref here */}
+        {/* Chat Interface */}
         <div 
           ref={chatInterfaceRef}
           className="premium-card max-w-4xl mx-auto interactive-glow"

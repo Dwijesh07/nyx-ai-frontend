@@ -15,6 +15,9 @@ export default function Tools() {
   const toolsSectionRef = React.useRef(null);
   
   const navigate = useNavigate();
+  
+  // ADD THIS LINE:
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const toolGroups = [
     {
@@ -99,7 +102,8 @@ export default function Tools() {
       formData.append("summaryType", summaryType);
       formData.append("summaryLength", summaryLength);
 
-      const res = await axios.post("http://nyxai.pxxl.click/api/summarize", formData, {
+      // UPDATED: Use API_URL variable
+      const res = await axios.post(`${API_URL}/api/summarize`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -517,7 +521,6 @@ export default function Tools() {
               Upgrade to Premium for unlimited access
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-             
               <button
                 onClick={() => navigate("/pricing")}
                 className="btn-secondary text-sm interactive-glow py-3"

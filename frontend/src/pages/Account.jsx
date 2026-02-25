@@ -9,6 +9,8 @@ export default function Account() {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [joined, setJoined] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -33,7 +35,7 @@ export default function Account() {
     };
 
     try {
-      const response = await fetch("http://nyxai.pxxl.click/api/waitlist", {
+      const response = await fetch(`${API_URL}/api/waitlist`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
