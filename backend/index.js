@@ -70,14 +70,34 @@ transporter.verify((error, success) => {
   }
 });
 
-// Middleware
-const corsOptions = {
-  origin: ['https://nyxai-three.vercel.app', 'http://localhost:5000'],
+// ==================== FIXED CORS CONFIGURATION ====================
+// More permissive CORS configuration
+app.use(cors({
+  origin: '*', // Allow all origins temporarily for testing
   credentials: true,
-  optionsSuccessStatus: 200
-};
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
 
-app.use(cors(corsOptions));
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.sendStatus(200);
+});
+
+// Add headers to all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  next();
+});
+// ==================== END CORS FIX ====================
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
