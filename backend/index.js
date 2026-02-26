@@ -7,6 +7,7 @@ import fs from "fs/promises";
 import nodemailer from "nodemailer";
 import summarizeRoute from "./routes/summarize.js";
 import chatRoute from "./routes/chat.js";
+import waitlistRoute from "./routes/waitlist.js"; // ADD THIS IMPORT
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -179,167 +180,6 @@ app.get("/api/test-email", async (req, res) => {
       error: error.message,
       code: error.code
     });
-  }
-});
-
-// ========== WAITLIST ENDPOINT ==========
-app.post("/api/waitlist", async (req, res) => {
-  console.log("\n📝 NEW WAITLIST SUBMISSION");
-  console.log("Request body:", req.body);
-  console.log("📧 Email credentials check:", {
-    hasEmail: !!process.env.MY_EMAIL,
-    hasPass: !!process.env.MY_PASS,
-    email: process.env.MY_EMAIL,
-    passLength: process.env.MY_PASS?.length
-  });
-  
-  try {
-    const { email, name } = req.body;
-    console.log("Email:", email);
-    console.log("Name:", name);
-    
-    if (!email || !email.includes('@')) {
-      console.log("❌ Invalid email");
-      return res.status(400).json({ error: 'Valid email required' });
-    }
-
-    const userName = name || 'Future Nyx User';
-    console.log("User name set to:", userName);
-    
-    if (!dataDir) {
-      throw new Error("No writable data directory available");
-    }
-    
-    // Read existing waitlist
-    const waitlistPath = path.join(dataDir, 'waitlist.json');
-    let users = [];
-    try {
-      const data = await fs.readFile(waitlistPath, 'utf8');
-      users = JSON.parse(data);
-      console.log(`📊 Existing users: ${users.length}`);
-    } catch (err) {
-      console.log("📂 New waitlist file will be created");
-    }
-    
-    // Check if email exists
-    if (users.some(user => user.email === email)) {
-      console.log("❌ Email already exists:", email);
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-    
-    // Add to waitlist
-    const newUser = {
-      email,
-      name: userName,
-      joinedAt: new Date().toISOString(),
-      id: Date.now().toString()
-    };
-    
-    users.push(newUser);
-    await fs.writeFile(waitlistPath, JSON.stringify(users, null, 2));
-    console.log("✅ User saved to waitlist.json");
-    
-    // Save to CSV
-    const csvPath = path.join(dataDir, 'waitlist.csv');
-    const csvLine = `${new Date().toISOString()},${email},${userName}\n`;
-    await fs.appendFile(csvPath, csvLine).catch(() => {});
-    console.log("✅ User saved to waitlist.csv");
-
-    // Check if email credentials exist
-    if (process.env.MY_EMAIL && process.env.MY_PASS) {
-      console.log("📧 Attempting to send welcome email to:", email);
-      
-      // 1. Send welcome email to user
-      try {
-        console.log("Preparing welcome email...");
-        const welcomeInfo = await transporter.sendMail({
-          from: `Nyx AI <${process.env.MY_EMAIL}>`,
-          to: email,
-          subject: '🎉 Welcome to Nyx AI Waitlist!',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; color: #e0e0e0; padding: 40px 20px; border-radius: 10px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #667eea; margin: 0;">Welcome to Nyx AI!</h1>
-                <p style="color: #888; margin-top: 10px;">Your AI-powered study companion</p>
-              </div>
-              
-              <p style="font-size: 16px; line-height: 1.6;">Hi ${userName}! 👋</p>
-              
-              <p style="font-size: 16px; line-height: 1.6;">Thanks for joining the waitlist! You're now part of an exclusive group of early adopters who will get first access to our AI-powered tools for students.</p>
-              
-              <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin: 30px 0;">
-                <h2 style="color: #667eea; margin-top: 0; font-size: 18px;">✨ What's coming:</h2>
-                <ul style="color: #e0e0e0; padding-left: 20px;">
-                  <li style="margin-bottom: 10px;">📝 AI Summarizer</li>
-                  <li style="margin-bottom: 10px;">💻 Code Explainer</li>
-                  <li style="margin-bottom: 10px;">🃏 Flashcard Generator</li>
-                  <li style="margin-bottom: 10px;">✅ Grammar Checker</li>
-                  <li style="margin-bottom: 10px;">➕ And 20+ more tools!</li>
-                </ul>
-              </div>
-              
-              <div style="background: #16213e; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
-                <p style="color: #e0e0e0; margin: 0;">Your spot on the waitlist:</p>
-                <div style="font-size: 36px; font-weight: bold; color: #667eea; margin: 10px 0;">#${users.length}</div>
-              </div>
-              
-              <hr style="border: 1px solid #1a1a2e; margin: 30px 0;">
-              <p style="color: #888; font-size: 12px; text-align: center;">You received this because you joined the Nyx AI waitlist.</p>
-            </div>
-          `
-        });
-        console.log("✅ Welcome email sent successfully! Message ID:", welcomeInfo.messageId);
-      } catch (emailError) {
-        console.log('❌ Welcome email failed:', emailError.message);
-        console.log('Error details:', {
-          name: emailError.name,
-          code: emailError.code,
-          response: emailError.response
-        });
-      }
-
-      // 2. Send notification to yourself
-      try {
-        console.log("📧 Attempting to send notification to admin:", process.env.MY_EMAIL);
-        
-        const notifyInfo = await transporter.sendMail({
-          from: `Nyx AI <${process.env.MY_EMAIL}>`,
-          to: process.env.MY_EMAIL,
-          subject: '🎉 NEW WAITLIST SIGNUP!',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; color: #e0e0e0; padding: 40px 20px; border-radius: 10px;">
-              <h1 style="color: #667eea; text-align: center;">New User Joined! 🎉</h1>
-              <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Name:</strong> ${userName}</p>
-                <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
-                <p><strong>Total Signups:</strong> ${users.length}</p>
-              </div>
-            </div>
-          `
-        });
-        console.log("✅ Notification email sent successfully! Message ID:", notifyInfo.messageId);
-      } catch (notifyError) {
-        console.log('❌ Notification email failed:', notifyError.message);
-        console.log('Error details:', {
-          name: notifyError.name,
-          code: notifyError.code,
-          response: notifyError.response
-        });
-      }
-    } else {
-      console.log('⚠️ Email credentials not set - skipping emails');
-    }
-
-    console.log("✅ Sending success response to client");
-    res.json({ 
-      success: true, 
-      message: 'Thanks for joining! Check your email for confirmation.' 
-    });
-    
-  } catch (error) {
-    console.error('❌ Server error:', error);
-    res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 });
 
@@ -557,6 +397,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/summarize", summarizeRoute);
 app.use("/api/chat", chatRoute);
+app.use("/api/waitlist", waitlistRoute); // ADD THIS LINE
 
 // ========== ERROR HANDLING ==========
 // 404 handler
