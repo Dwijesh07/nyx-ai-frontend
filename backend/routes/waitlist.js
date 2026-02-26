@@ -80,7 +80,7 @@ router.post("/", async (req, res) => {
 
     // 1. SEND WELCOME EMAIL TO USER
     const welcomeEmail = {
-      from: `Nyx AI <${process.env.EMAIL_USER}>`,
+      from: `Nyx AI <${process.env.MY_EMAIL}>`,
       to: email,
       subject: '🎉 Welcome to Nyx AI Waitlist!',
       html: `
@@ -131,8 +131,8 @@ router.post("/", async (req, res) => {
 
     // 2. SEND NOTIFICATION TO YOURSELF
     const notificationEmail = {
-      from: `Nyx AI <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Your email for notifications
+      from: `Nyx AI <${process.env.MY_EMAIL}>`,
+      to: process.env.MY_EMAIL, // Your email for notifications
       subject: '🎉 NEW WAITLIST SIGNUP!',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; color: #e0e0e0; padding: 40px 20px; border-radius: 10px;">

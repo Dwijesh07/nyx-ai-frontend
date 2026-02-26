@@ -7,7 +7,7 @@ import fs from "fs/promises";
 import nodemailer from "nodemailer";
 import summarizeRoute from "./routes/summarize.js";
 import chatRoute from "./routes/chat.js";
-import waitlistRoute from "./routes/waitlist.js"; // ADD THIS IMPORT
+import waitlistRoute from "./routes/waitlist.js";
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -17,21 +17,8 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '.env');
 console.log("Loading .env from:", envPath);
 
-// Check if file exists
-try {
-  await fs.access(envPath);
-  console.log("✅ .env file found");
-} catch {
-  console.log("❌ .env file NOT found at:", envPath);
-}
-
-// Load .env
-const result = dotenv.config({ path: envPath });
-if (result.error) {
-  console.log("❌ Error loading .env:", result.error.message);
-} else {
-  console.log("✅ .env loaded successfully");
-}
+// Load .env (no await needed here)
+dotenv.config({ path: envPath });
 
 // Debug output
 console.log("\n=== ENV VARIABLES ===");
@@ -112,30 +99,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ========== DATA DIRECTORY WITH FALLBACK ==========
-let dataDir;
-try {
-  dataDir = path.join(__dirname, 'data');
-  await fs.mkdir(dataDir, { recursive: true });
-  // Test write permissions
-  const testFile = path.join(dataDir, 'test.txt');
-  await fs.writeFile(testFile, 'test');
-  await fs.unlink(testFile);
-  console.log("✅ Data directory is writable at:", dataDir);
-} catch (err) {
-  console.log("⚠️ Cannot write to ./data, trying /tmp instead:", err.message);
-  // Try using /tmp directory (common in hosting environments)
-  dataDir = '/tmp/nyx-data';
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
-    console.log("✅ Using /tmp directory at:", dataDir);
-  } catch (tmpErr) {
-    console.error("❌ Cannot write to any directory:", tmpErr.message);
-    dataDir = null;
-  }
-}
-
-// Add this temporary test endpoint
+// Add temporary test endpoint
 app.get("/api/chat-test", (req, res) => {
   res.json({ 
     message: "Chat routes are working", 
@@ -186,10 +150,7 @@ app.get("/api/test-email", async (req, res) => {
 // ========== VIEW WAITLIST (Admin) ==========
 app.get("/api/waitlist", async (req, res) => {
   try {
-    if (!dataDir) {
-      return res.send('<h1>No data directory available</h1>');
-    }
-    const waitlistPath = path.join(dataDir, 'waitlist.json');
+    const waitlistPath = path.join(__dirname, 'data', 'waitlist.json');
     let users = [];
     
     try {
@@ -251,12 +212,8 @@ app.post("/api/contact", async (req, res) => {
       return res.status(400).json({ error: 'Name, email and message are required' });
     }
 
-    if (!dataDir) {
-      throw new Error("No writable data directory available");
-    }
-    
     // Save to JSON file
-    const contactPath = path.join(dataDir, 'contact.json');
+    const contactPath = path.join(__dirname, 'data', 'contact.json');
     let contacts = [];
     try {
       const data = await fs.readFile(contactPath, 'utf8');
@@ -279,7 +236,7 @@ app.post("/api/contact", async (req, res) => {
     await fs.writeFile(contactPath, JSON.stringify(contacts, null, 2));
     
     // Save to CSV
-    const csvPath = path.join(dataDir, 'contact.csv');
+    const csvPath = path.join(__dirname, 'data', 'contact.csv');
     const csvLine = `${new Date().toISOString()},${name},${email},${phone || 'N/A'},${subject || 'General'},${message.replace(/,/g, ';')}\n`;
     await fs.appendFile(csvPath, csvLine).catch(() => {});
 
@@ -326,10 +283,7 @@ app.post("/api/contact", async (req, res) => {
 // ========== VIEW CONTACT SUBMISSIONS (Admin) ==========
 app.get("/api/contact", async (req, res) => {
   try {
-    if (!dataDir) {
-      return res.send('<h1>No data directory available</h1>');
-    }
-    const contactPath = path.join(dataDir, 'contact.json');
+    const contactPath = path.join(__dirname, 'data', 'contact.json');
     let contacts = [];
     
     try {
@@ -397,7 +351,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/summarize", summarizeRoute);
 app.use("/api/chat", chatRoute);
-app.use("/api/waitlist", waitlistRoute); // ADD THIS LINE
+app.use("/api/waitlist", waitlistRoute);
 
 // ========== ERROR HANDLING ==========
 // 404 handler
@@ -420,7 +374,11 @@ process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
 });
 
+// ========== START SERVER ==========
 const PORT = process.env.PORT || 5000;
+
+// Create data directory if it doesn't exist (non-blocking)
+fs.mkdir(path.join(__dirname, 'data'), { recursive: true }).catch(() => {});
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://localhost:${PORT}`);
